@@ -3,7 +3,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TupleSections #-}
 -- |
 -- Module:       $HEADER$
 -- Description:  TODO
@@ -38,7 +37,7 @@ import Control.Concurrent.Chan.Unagi
     )
 import Data.DHT (DhtKey, Encoding)
 import Data.LogStr.Formatting ((%), shown)
-import System.Lumberjack.Backend (pushLogStrLn)
+import System.Lumberjack.Backend (pushLogStr)
 
 import Data.DHT.DKS.Internal.Monad
     ( DksM
@@ -174,8 +173,8 @@ newDksHandle msgChan opts self = do
     return h
   where
     -- TODO: Finalizer; exception handling.
-    mainLoop outChan env = forever $ do
-        readChan outChan >>= runHandler env (threadMain self)
+    mainLoop outChan env = forever
+        $ readChan outChan >>= runHandler env (threadMain self)
 
     -- If exception makes its way up here, then it should crash
     -- the whole node.
@@ -188,7 +187,7 @@ newDksHandle msgChan opts self = do
 
     mkDksMonadEnv s = DksMonadEnv
         { DksMonadEnv._self = self
-        , DksMonadEnv._logger = pushLogStrLn (_logging opts)
+        , DksMonadEnv._logger = pushLogStr (_logging opts)
         , DksMonadEnv._send = sendMessage msgChan
         , DksMonadEnv._yield = _yield opts
         , DksMonadEnv._mutableState = s

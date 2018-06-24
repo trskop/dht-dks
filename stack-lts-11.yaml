@@ -13,7 +13,7 @@ packages:
 
   - location:
       git: https://github.com/trskop/lumberjack.git
-      commit: f10a5c90470ded4efb1e886b5424cbeb02751618
+      commit: fdde5608f951333e2a585415450a1cf9a1ee832e
     subdirs:
       - log-level
       - logstr
