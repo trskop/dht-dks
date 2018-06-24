@@ -15,11 +15,12 @@
 module Test
   where
 
+import Control.Applicative (pure)
 import Control.Concurrent (ThreadId, forkIO{-, threadDelay-})
 import Control.Concurrent.STM (atomically)
 import Control.Concurrent.STM.TChan (TChan, dupTChan, newTChanIO, readTChan)
 import Control.Exception (finally)
-import Control.Monad ((>>=), forever, return)
+import Control.Monad ((>>=), forever)
 import Data.Either (Either(Left, Right))
 import Data.Function (($), (.))
 import Data.Functor ((<$>))
@@ -102,8 +103,8 @@ networkMain l = do
                 send msg >>= handleSendFailure toNode
   where
     handleSendFailure toNode = \case
-        Right () -> return ()
-        Left e -> do
+        Right () -> pure ()
+        Left e ->
             pushLogStrLn l $ format
                 ( "networkMain: Encountered failure when passing message to "
                 % " node: " % shown % ": " % shown) toNode e

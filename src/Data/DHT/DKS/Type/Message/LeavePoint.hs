@@ -4,7 +4,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 -- |
 -- Module:       $HEADER$
@@ -26,9 +25,6 @@ import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import Text.Show (Show)
 
-import Data.Default.Class (Default(def))
-import Data.OverloadedRecords.TH (overloadedRecord)
-
 import Data.DHT.DKS.Type.Hash (DksHash)
 
 
@@ -37,5 +33,3 @@ data LeavePoint = LeavePoint
     , _predecessor :: !DksHash
     }
   deriving (Eq, Generic, Show, Typeable)
-
-overloadedRecord def ''LeavePoint

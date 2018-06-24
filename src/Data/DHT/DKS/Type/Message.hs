@@ -2,10 +2,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 -- |
 -- Module:       $HEADER$
@@ -32,9 +30,6 @@ import Data.Typeable (Typeable)
 import GHC.Generics (Generic)
 import Text.Show (Show)
 
-import Data.Default.Class (Default(def))
-import Data.OverloadedRecords.TH (overloadedRecord)
-
 import Data.DHT.DKS.Type.Hash (DksHash)
 import Data.DHT.DKS.Type.Message.GrantLeave (GrantLeave)
 import Data.DHT.DKS.Type.Message.JoinDone (JoinDone)
@@ -57,8 +52,6 @@ data DksMessageHeader = DksMessageHeader
 --  , _originator :: !DksHash
     }
   deriving (Eq, Generic, Show, Typeable)
-
-overloadedRecord def ''DksMessageHeader
 
 data DksMessageBody
     -- {{{ Joining ------------------------------------------------------------
@@ -90,8 +83,6 @@ data DksMessage = DksMessage
     , _body :: DksMessageBody
     }
   deriving (Eq, Generic, Show, Typeable)
-
-overloadedRecord def ''DksMessage
 
 class IsDksMessage a where
     dksMessage :: DksMessageHeader -> a -> DksMessage
