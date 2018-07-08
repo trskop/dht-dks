@@ -6,7 +6,7 @@
 -- |
 -- Module:       $HEADER$
 -- Description:  TODO
--- Copyright:    (c) 2015 Jan Šipr, Matej Kollár, Peter Trško
+-- Copyright:    (c) 2015 Jan Šipr, Matej Kollár; 2015-2018 Peter Trško
 -- License:      BSD3
 --
 -- Stability:    experimental
@@ -28,11 +28,11 @@ import GHC.Generics (Generic)
 --import Text.Show (Show) -- TODO
 import System.IO (IO)
 
+import Data.ByteString (ByteString)
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap (empty, insert, lookup)
 
 import Data.Default.Class (Default(def))
-import Data.DHT.Type.Encoding (Encoding)
 
 import Data.DHT.DKS.Type.Hash (DksHash)
 
@@ -43,10 +43,10 @@ newtype DksStorage = DksStorage (IORef DksStorage_)
 newDksStorage :: IO DksStorage
 newDksStorage = DksStorage <$> newIORef def
 
-lookup :: DksStorage -> DksHash -> IO (Maybe Encoding)
+lookup :: DksStorage -> DksHash -> IO (Maybe ByteString)
 lookup (DksStorage ref) k = (`lookup'` k) <$> readIORef ref
 
-insert :: DksHash -> Encoding -> DksStorage -> IO ()
+insert :: DksHash -> ByteString -> DksStorage -> IO ()
 insert k v (DksStorage ref) = atomicModifyIORef' ref $ (, ()) <$> insert' k v
 
 -- {{{ DksStorage_ -- Pure storage --------------------------------------------
@@ -59,7 +59,7 @@ data DksStorage_ = DksStorage_
     , _usedMemory :: {-# UNPACK #-} !Word64
     -- ^ Approximation of how much memory 'HashMap' in '_storage' uses.
 
-    , _storage :: HashMap DksHash Encoding
+    , _storage :: HashMap DksHash ByteString
     }
   deriving ({-Data, -}Generic, {-Show, -}Typeable)
     -- Data and Show can be derived only if DataValue has instances for them.
@@ -71,10 +71,10 @@ instance Default DksStorage_ where
         , _storage = HashMap.empty
         }
 
-lookup' :: DksStorage_ -> DksHash -> Maybe Encoding
+lookup' :: DksStorage_ -> DksHash -> Maybe ByteString
 lookup' DksStorage_{_storage} k = HashMap.lookup k _storage
 
-insert' :: DksHash -> Encoding -> DksStorage_ -> DksStorage_
+insert' :: DksHash -> ByteString -> DksStorage_ -> DksStorage_
 insert' k v DksStorage_{_objectCounter, _usedMemory, _storage} = DksStorage_
     { _objectCounter = _objectCounter + 1
     , _usedMemory = _usedMemory -- TODO: + memoryUsage k + memoryUsage v

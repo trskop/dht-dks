@@ -8,7 +8,7 @@
 -- |
 -- Module:       $HEADER$
 -- Description:  TODO
--- Copyright:    (c) 2016 Peter Trško
+-- Copyright:    (c) 2016-2018 Peter Trško
 -- License:      BSD3
 --
 -- Stability:    experimental
@@ -98,14 +98,13 @@ import Control.Monad.Except
     , throwError
     )
 import Control.Monad.Reader (ReaderT, asks, runReaderT)
+import Data.ByteString (ByteString)
 import Data.Default.Class (Default(def))
 import Data.HashMap.Strict (HashMap)
 import qualified Data.HashMap.Strict as HashMap (empty)
 import Data.LogStr (LogStr)
 import Data.LogStr.Formatting (Format, (%), runFormat, shown)
 import Data.Monoid.Endo (E)
-
-import Data.DHT.Type.Encoding (Encoding)
 
 import Data.DHT.DKS.Type.EVar (EVar, EVarIO, failure, success_)
 import Data.DHT.DKS.Type.Hash (DksHash)
@@ -124,7 +123,7 @@ import qualified Data.DHT.DKS.Type.State as Pure (stepDksState)
 
 -- TODO: Move this data type into its own module.
 
-data DksException = DksStateTransitionFailed SignalInfo
+newtype DksException = DksStateTransitionFailed SignalInfo
   deriving (Eq, Show)
 
 instance Exception DksException
@@ -138,7 +137,7 @@ data DksCallbacks = DksCallbacks
     , _onLeave :: EVar () -> IO ()
     , _onSuccessorChange :: Maybe DksHash -> Maybe DksHash -> IO ()
     , _onPredecessorChange :: Maybe DksHash -> Maybe DksHash -> IO ()
-    , _onLookupResult :: HashMap DksHash (EVar Encoding -> IO ())
+    , _onLookupResult :: HashMap DksHash (EVar ByteString -> IO ())
     }
 
 -- | State of a main thread of DKS node.

@@ -6,7 +6,7 @@
 -- |
 -- Module:       $HEADER$
 -- Description:  TODO
--- Copyright:    (c) 2016 Peter Trško
+-- Copyright:    (c) 2016-2018 Peter Trško
 -- License:      BSD3
 --
 -- Stability:    experimental
@@ -35,7 +35,7 @@ import Control.Concurrent.Chan.Unagi
     , readChan
     , writeChan
     )
-import Data.DHT (DhtKey, Encoding)
+import Data.ByteString (ByteString)
 import Data.LogStr.Formatting ((%), shown)
 import System.Lumberjack.Backend (pushLogStr)
 
@@ -254,10 +254,10 @@ dksJoin callback handle@DksHandle{_options = opts} =
 dksLeave :: Maybe OnLeave -> DksHandle -> IO ()
 dksLeave callback handle = _sendOp handle (LeaveOp callback)
 
-dksLookup :: OnResult Encoding -> DksHandle -> DhtKey -> IO ()
+dksLookup :: OnResult ByteString -> DksHandle -> DksHash -> IO ()
 dksLookup callback handle = _sendOp handle . LookupOp callback
 
-dksInsert :: Maybe OnDone -> DksHandle -> DhtKey -> Encoding -> IO ()
+dksInsert :: Maybe OnDone -> DksHandle -> DksHash -> ByteString -> IO ()
 dksInsert callback handle = (_sendOp handle .) . InsertOp callback
 
 dksGetState :: (DksState -> IO ()) -> DksHandle -> IO ()

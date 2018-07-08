@@ -8,7 +8,7 @@ packages:
 
   - location:
       git: https://github.com/trskop/dht-api.git
-      commit: d4a4711678bf24388b86b357ec9e778de3c6b92d
+      commit: c6bbd8a466c8af2337ffbc0b06ff3479a214d343
     extra-dep: true
 
   - location:

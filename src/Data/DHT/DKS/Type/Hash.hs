@@ -1,13 +1,10 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PackageImports #-}
 -- |
 -- Module:       $HEADER$
 -- Description:  TODO
--- Copyright:    (c) 2016 Peter Trško
+-- Copyright:    (c) 2016-2018 Peter Trško
 -- License:      BSD3
 --
 -- Stability:    experimental
@@ -16,9 +13,7 @@
 -- TODO
 module Data.DHT.DKS.Type.Hash
     ( DksHash(..)
-    , dksHash
-    , dksHashText
-    , dksHashKey
+    , DksHashable(..)
 
     -- * Unsafe
     , unsafeMkDksHash
@@ -29,7 +24,7 @@ import Prelude (Bounded(maxBound, minBound), Num((+), (-)))
 
 import Data.Bool (Bool(False, True), otherwise)
 import Data.Eq (Eq((==)))
-import Data.Function (($), (.))
+import Data.Function (($), (.), id)
 import Data.Ord (Ord(compare))
 import Data.Tuple (snd)
 import Data.Typeable (Typeable)
@@ -44,7 +39,6 @@ import Data.ByteString (ByteString)
 import qualified Data.ByteString as ByteString (mapAccumR, replicate)
 import qualified Data.ByteString.Char8 as ByteString.Char8 (unpack)
 import Data.DHT.Type.Hash (DhtHash(pred, succ))
-import Data.DHT.Type.Key (DhtKey(DhtKey, DhtKeyText))
 import Data.Hashable (Hashable)
 import qualified Data.Hashable as Hashable (Hashable(hash, hashWithSalt))
 import Data.Text (Text)
@@ -94,15 +88,19 @@ instance DhtHash DksHash where
 unsafeMkDksHash :: ByteString -> DksHash
 unsafeMkDksHash bs = DksHash bs (convertToBase Base16 bs)
 
-dksHashKey :: DhtKey -> DksHash
-dksHashKey = \case
-    DhtKeyText t -> dksHashText t
-    DhtKey bs -> dksHash bs
+class DksHashable a where
+    dksHash :: a -> DksHash
 
-dksHashText :: Text -> DksHash
-dksHashText = dksHash . Text.encodeUtf8
+instance DksHashable DksHash where
+    dksHash = id
 
-dksHash :: ByteString -> DksHash
-dksHash bs = DksHash (toBytes h) (digestToHexByteString h)
+instance DksHashable Text where
+    dksHash = dksHashByteString . Text.encodeUtf8
+
+instance DksHashable ByteString where
+    dksHash = dksHashByteString
+
+dksHashByteString :: ByteString -> DksHash
+dksHashByteString bs = DksHash (toBytes h) (digestToHexByteString h)
   where
     h = Crypto.hash bs :: Digest SHA1

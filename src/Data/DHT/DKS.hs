@@ -3,7 +3,7 @@
 -- |
 -- Module:       $HEADER$
 -- Description:  TODO
--- Copyright:    (c) 2015 Jan Šipr, Matej Kollár; 2015-2016 Peter Trško
+-- Copyright:    (c) 2015 Jan Šipr, Matej Kollár; 2015-2018 Peter Trško
 -- License:      BSD3
 --
 -- Stability:    experimental
@@ -32,13 +32,13 @@ import Data.Functor ((<$), (<$>))
 import Data.Maybe (Maybe(Just))
 import System.IO (IO)
 
+import Data.ByteString (ByteString)
+
 import Data.DHT.Type.Handle
     ( DhtHandle(DhtHandle)
     , DhtHandle'(DhtHandle', hash, insert, join, leave, lookup, state)
     )
-import Data.DHT.Type.Key (DhtKey)
 import Data.DHT.Type.Result (DhtResult, DhtResultVar(DhtResultVar))
-import Data.DHT.Type.Encoding (Encoding)
 
 import Data.DHT.DKS.Internal
     ( DksHandle
@@ -53,7 +53,12 @@ import Data.DHT.DKS.Type.MessageChannel (DksMessageChannel)
 import Data.DHT.DKS.Type.Params (DksParams, discovery, logging, singleton)
 
 
-newDks :: DksMessageChannel chan => chan -> DksParams -> DksHash -> IO DhtHandle
+newDks
+    :: DksMessageChannel chan
+    => chan
+    -> DksParams
+    -> DksHash
+    -> IO (DhtHandle DksHash ByteString)
 newDks chan params node = mkDhtHandle <$> newDksHandle chan params node
   where
     mkDhtHandle s = DhtHandle DhtHandle'
@@ -74,13 +79,13 @@ joinImpl h = withDhtResult $ \v -> dksJoin (done v . void) h
 leaveImpl :: DksHandle -> DhtResult IO ()
 leaveImpl h = withDhtResult $ \v -> dksLeave (Just (done v)) h
 
-lookupImpl :: DksHandle -> DhtKey -> DhtResult IO Encoding
+lookupImpl :: DksHandle -> DksHash -> DhtResult IO ByteString
 lookupImpl h k = withDhtResult $ \v ->
     dksLookup (done v) h k
 
-insertImpl :: DksHandle -> DhtKey -> Encoding -> DhtResult IO ()
+insertImpl :: DksHandle -> DksHash -> ByteString -> DhtResult IO ()
 insertImpl s k e = withDhtResult $ \v ->
     dksInsert (Just (done v)) s k e
 
 done :: MVar (Either SomeException a) -> Either SomeException a -> IO ()
-done v = putMVar v
+done = putMVar

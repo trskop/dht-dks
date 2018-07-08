@@ -7,7 +7,7 @@ license:                BSD3
 license-file:           LICENSE
 author:                 Jan Šipr, Matej Kollár, Peter Trško
 maintainer:             peter.trsko@gmail.com
-copyright:              (c) 2015 Jan Šipr, Matej Kollár; 2015-2016 Peter Trško
+copyright:              (c) 2015 Jan Šipr, Matej Kollár; 2015-2018 Peter Trško
 category:               Data
 build-type:             Simple
 cabal-version:          >=1.10

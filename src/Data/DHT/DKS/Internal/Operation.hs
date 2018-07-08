@@ -9,7 +9,7 @@
 -- Module:       $HEADER$
 -- Description:  Operations (RPC calls and message handlers) of a DKS (DHT)
 --               node.
--- Copyright:    (c) 2016 Peter Trško
+-- Copyright:    (c) 2016-2018 Peter Trško
 -- License:      BSD3
 --
 -- Stability:    experimental
@@ -112,7 +112,8 @@ module Data.DHT.DKS.Internal.Operation
     )
   where
 
-import Control.Monad (Monad((>>=)), return)
+import Control.Applicative (pure)
+import Control.Monad ((>>=))
 import Data.Bool (Bool(False, True), (&&), (||), not, otherwise)
 import Data.Eq (Eq((/=), (==)))
 import Data.Function (($), (.), const)
@@ -122,16 +123,15 @@ import GHC.Generics (Generic)
 import Text.Show (Show(showsPrec), showString)
 import System.IO (IO)
 
+import Data.ByteString (ByteString)
 import Data.Default.Class (Default(def))
 import Data.LogStr.Formatting ((%), shown)
 
-import Data.DHT.Type.Encoding (Encoding)
 import Data.DHT.Type.Hash
     ( Bound(Excluding, Including)
     , inInterval
     , isWholeSpace
     )
-import Data.DHT.Type.Key (DhtKey)
 
 import Data.DHT.DKS.Internal.Monad
     ( DksM
@@ -280,11 +280,11 @@ data DksOperation
     -- ^ Application (in which DKS node is embedded) is requesting it to leave
     -- a DHT overlay network.
 
-    | LookupOp !(OnResult Encoding) !DhtKey
+    | LookupOp !(OnResult ByteString) !DksHash
     -- ^ Application (in which DKS node is embedded) is requesting it to lookup
     -- a value in a DHT overlay network which it is part of.
 
-    | InsertOp !(Maybe OnDone) !DhtKey !Encoding
+    | InsertOp !(Maybe OnDone) !DksHash !ByteString
     -- ^ Application (in which DKS node is embedded) is requesting it to
     -- insert\/store a key-value pair in a DHT.
 
@@ -359,7 +359,7 @@ handleJoin = handle joinFailure . \case
 -- {{{ JoinRetry --------------------------------------------------------------
 
 handleJoinRetry :: JoinRetry -> DksM ()
-handleJoinRetry _msg = return ()     -- TODO
+handleJoinRetry _msg = pure ()     -- TODO
 
 -- }}} JoinRetry --------------------------------------------------------------
 
@@ -508,7 +508,7 @@ handleJoinPoint msg@JoinPoint{JoinPoint._requester = rqstr} = do
 handleNewSuccessor :: NewSuccessor -> DksM ()
 handleNewSuccessor msg@NewSuccessor{NewSuccessor._successor = newSucc} =
     fromDksState _successor >>= \case
-        Nothing      -> return ()
+        Nothing      -> pure ()
         Just oldSucc -> do
             stepDksState EventNewSuccessor $ \s -> s
                 { _successor = Just newSucc
@@ -538,7 +538,7 @@ handleNewSuccessor msg@NewSuccessor{NewSuccessor._successor = newSucc} =
 handleNewSuccessorAck :: NewSuccessorAck -> DksM ()
 handleNewSuccessorAck NewSuccessorAck{NewSuccessorAck._requester = rqstr} =
     fromDksState _oldPredecessor >>= \case
-        Nothing      -> return () -- Error.
+        Nothing      -> pure () -- Error.
         Just oldPred -> do
             stepDksState EventNewSuccessorAck $ \s -> s
                 { _lock = False
@@ -658,7 +658,7 @@ handleLeave = handle leaveFailure $ do
       | otherwise -> retryLeave
         -- TODO: What does this mean? Stabilization? Error?
   where
-    retryLeave = return ()  -- TODO
+    retryLeave = pure ()  -- TODO
 
 -- $leaveDefinition
 --
@@ -730,7 +730,7 @@ handleLeaveRetry from msg@LeaveRetry{LeaveRetry._requester = rqstr} = do
                 % "resending to intended recipient " % hash % ".") self rqstr
             send $ dksMessage DksMessageHeader{_to = rqstr, _from = from} msg
   where
-    retryLeave = return ()  -- TODO
+    retryLeave = pure ()  -- TODO
 
 -- $retryLeaveDefinition
 --
@@ -767,7 +767,7 @@ handleGrantLeave from msg@GrantLeave{GrantLeave._requester = rqstr} = do
             logf (hash % ": Passing grant leave to: " % hash) self rqstr
             send $ dksMessage DksMessageHeader{_to = rqstr, _from = from} msg
 
-      | otherwise -> return ()  -- TODO: What does this mean?
+      | otherwise -> pure ()  -- TODO: What does this mean?
 
 -- $grantLeaveDefinition
 --
@@ -787,7 +787,7 @@ handleLeavePoint :: LeavePoint -> DksM ()
 handleLeavePoint msg@LeavePoint{LeavePoint._requester = rqstr} = do
     oldPred <- fromDksState _predecessor
     if oldPred /= Just rqstr
-        then return ()  -- TODO: What does this mean?
+        then pure ()  -- TODO: What does this mean?
         else do
             self <- getSelf
             let newPred = LeavePoint._predecessor msg
@@ -827,9 +827,9 @@ handleUpdateSuccessor msg = do
             , UpdateSuccessor._successor = newSucc
             } = msg
     fromDksState _successor >>= \case
-        Nothing      -> return ()   -- TODO: What does this mean?
+        Nothing -> pure ()   -- TODO: What does this mean?
         Just oldSucc
-          | oldSucc /= rqstr -> return ()   -- TODO: What does this mean?
+          | oldSucc /= rqstr -> pure ()   -- TODO: What does this mean?
           | otherwise        -> do
                 stepDksState EventUpdateSuccessor $ \s -> s
                     { _successor = Just newSucc
@@ -866,7 +866,7 @@ handleUpdateSuccessorAck msg = do
             , UpdateSuccessorAck._successor = predNewSucc
             } = msg
     fromDksState _successor >>= \case
-        Nothing   -> return ()  -- TODO: What does this mean?
+        Nothing   -> pure ()  -- TODO: What does this mean?
         Just succ -> do
             self <- getSelf
             if rqstr == self && predOldSucc == self && predNewSucc == succ
@@ -877,7 +877,7 @@ handleUpdateSuccessorAck msg = do
                         LeaveDone{LeaveDone._requester = self}
                     logf (hash % ": Successfully left the overlay.") self
                     leaveSuccess
-                else return ()  -- TODL: What does this mean?
+                else pure ()  -- TODL: What does this mean?
 
 -- $updateSuccessorAckDefinition
 --
@@ -900,7 +900,7 @@ handleLeaveDone LeaveDone{LeaveDone._requester = rqstr} = do
             logf (hash % ": Old predecessor left the overlay successfully: "
                 % hash) self rqstr
             stepDksState EventPredecessorLeaveDone $ \s -> s{_lock = False}
-        else do
+        else
             logf (hash % ": Discarding LeaveDone message from " % hash
                 % " that doesn't belong to our old predecessor " % shown) self
                 rqstr oldPred
